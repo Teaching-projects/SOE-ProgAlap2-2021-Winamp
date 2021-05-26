@@ -101,6 +101,7 @@ class Layout(tk.Tk):
 
         path = os.getcwd()
 
+        #getting the raw image from the folder
         
         raw_playbutton = Image.open(f"{path}\\images\\4.png")
         raw_pausebutton = Image.open(f"{path}\\images\\5.png")
@@ -112,6 +113,8 @@ class Layout(tk.Tk):
         raw_disabled_back_button = Image.open(f"{path}\\images\\8.png")
         raw_normal_back_button = Image.open(f"{path}\\images\\9.png")
 
+        #resizing the image with antialising
+
         resized_playbutton = raw_playbutton.resize((40,40),Image.ANTIALIAS)
         resized_pausebutton = raw_pausebutton.resize((40,40),Image.ANTIALIAS)
         resized_unpausebutton = raw_unpausebutton.resize((40,40),Image.ANTIALIAS)
@@ -121,6 +124,8 @@ class Layout(tk.Tk):
         resized_shufflebutton = raw_shufflebutton.resize((50,50),Image.ANTIALIAS)
         resized_disabled_back_button = raw_disabled_back_button.resize((50,50),Image.ANTIALIAS)
         resized_normal_back_button = raw_normal_back_button.resize((50,50),Image.ANTIALIAS)
+
+        # getting the image that will be used
 
         self.playbutton_im = ImageTk.PhotoImage(resized_playbutton)
         self.pausebutton_im = ImageTk.PhotoImage(resized_pausebutton)
@@ -156,6 +161,9 @@ class Layout(tk.Tk):
         self.back_button.grid(row = 0,column = 7,padx = 5)
         
     def show_favourites(self):
+        """
+        this is the command that is executed when the show favourites playlist is clicked. 
+        """
         self.songbox.delete(0,tk.END)
         self.defeault_song_list = self.song_list
         for i in range(len(self.favourites)):
@@ -166,6 +174,10 @@ class Layout(tk.Tk):
 
 
     def add_favourites(self):
+        """
+        this commnand is called when the user wants to put in new songs into the playlist. first it generates a new window with the full songlist, the user can choose multiple songs from it,
+        and then if you press the tick button the next function is called.
+        """
         self.newWindow = tk.Toplevel(self)
         self.newWindow.title("Create playlist")
         self.newWindow.geometry("700x400")
@@ -186,6 +198,10 @@ class Layout(tk.Tk):
                 self.new_songbox.insert(tk.END, self.song_list[i])
 
     def done_button_pressed(self):
+        """
+        when the user is done with choosing new songs, than they can press the button with a tick on it, and then the new window will be destroyed. if the user clicks on the show playlist again,
+        it will be shoing the new and refreshed favourites playlist with the chosen songs in it as well as previous ones
+        """
         selected_songs = [self.new_songbox.get(i) for i in self.new_songbox.curselection()]
         for i in range(len(selected_songs)):
 
@@ -213,6 +229,10 @@ class Layout(tk.Tk):
             self.songbox.insert(tk.END, self.song_list[i])
             
     def back_button_pressed(self):
+        """
+        this is only pressable if the playlist is shown. if the songbox is set to the playlist the backj button's icon will turn into normal, and it can be clicked. upon clicking it
+        the songbox will update, and it will generate back into the original default songs
+        """
         self.songbox.delete(0, tk.END)
         self.song_list = self.defeault_song_list
         for i in range(len(self.song_list)):
@@ -243,13 +263,13 @@ class Layout(tk.Tk):
             pygame.mixer.music.queue(current_song)
             
     def delete_song(self):
-        """needs fixing"""
-        self.status_bar.config(text='')
-        self.song_slider.set(0)
-        pygame.music.mixer.stop()
-        self.songbox.select_clear(tk.ACTIVE)
-        self.songbox.delete(tk.ANCHOR)
-        self.check_event()
+        current_song = self.songbox.get(tk.ACTIVE)
+        for i in range(len(self.song_list)):
+            if self.song_list[i] == current_song:
+                index = i
+        self.songbox.delete(index,last =None)
+        self.song_list.pop(index)
+        print(self.song_list)
         
 
 
@@ -306,6 +326,9 @@ class Layout(tk.Tk):
 
 
     def play_button_pressed(self):
+        """
+        if the user clicks on a song in the songbox and clickes this, it will start the song and play it.
+        """
         
         pygame.init()
         pygame.mixer.init()
@@ -318,37 +341,21 @@ class Layout(tk.Tk):
         self.song_slider.config(to = slide_position)
         self.song_slider.set(0)
         
-
-    def create_playlist(self):
-        self.newWindow = tk.Toplevel(self)
-        self.newWindow.title("Create playlist")
-        self.newWindow.geometry("700x400")
-        self.new_frame = tk.Frame(self.newWindow)
-        self.new_frame.pack()
-
-        self.new_playlist_name = tk.Entry(self.new_frame,textvar = self.stringvar)
-        self.new_playlist_name.grid(row = 0, column =0)
-
-        done_button = tk.Button(self.new_frame,text = "✓",bg = "white",command = self.done_button_pressed)
-        done_button.grid(row = 0, column =1)
-
-        self.select_label = tk.Label(self.new_frame,text = "Select the songs you want to put into the new playlist")
-        self.select_label.grid(row =1,column=0)
-
-        self.new_songbox = tk.Listbox(self.new_frame,bg = "white",width = 50,selectmode = "multiple",font = self.font)
-        self.new_songbox.grid(row = 2,column= 0)
-        #put in all the songs from the original into this for selection
-        for i in range(len(self.song_list)):
-            if self.song_list[i].endswith(".mp3"):
-                self.new_songbox.insert(tk.END, self.song_list[i])
         
     def unstop_button_pressed(self):
+        """
+        it will stop the song
+        """
         pygame.mixer.music.unpause()
 
     
     
     
     def next_button_pressed(self):
+        """
+        this is callled when the user clickes the next button. if the loop checkbox is cliced, the user cannot click the next button, and the current song is set to looping.
+        if the shuffle checkbox is pressed, than the next song will be a random one.
+        """
         shuffle_value = self.shufflevar.get()
         loop_value = self.loopvar.get()
         if shuffle_value == 1:
@@ -395,9 +402,15 @@ class Layout(tk.Tk):
                 self.check_event()
     
     def stop_button_pressed(self):
+        """
+        stops the music(pauses)
+        """
         pygame.mixer.music.pause()
 
     def previous_button_pressed(self):
+        """
+        plays the previous song
+        """
         previous_one = self.songbox.curselection()
         previous_one = previous_one[0]-1
         song = self.songbox.get(previous_one)
@@ -417,15 +430,17 @@ class Layout(tk.Tk):
     
     #set the volume
     def volume(self,vol):
+        """
+        this is the function to get the volume to to the stuff it need to do
+        Args:
+            vol (int): this is only needed becuase this is the value that the function uses forthe value of the current volume
+        """
         pygame.init()
         pygame.mixer.init()
         
         self.scalevar = int(vol) / 100
         pygame.mixer.music.set_volume(self.scalevar)
         
-
-    
-
 
 layout = Layout()
 layout.create_lisbox()
