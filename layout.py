@@ -5,8 +5,8 @@ from mutagen.mp3 import MP3
 from tkinter import filedialog
 import os
 import pygame
-
 import time
+import json
 import random
 from tkinter.font import Font
 
@@ -19,31 +19,39 @@ class Layout(tk.Tk):
         """
         # the frames
         
-        self.title("MP3 player marci módra")
+        self.title("Audify MP3 player")
         self.geometry("700x400")
         self.masterframe = tk.Frame(self)
         self.masterframe.pack()
         self.topframe = tk.Frame(self.masterframe,bg = "white")
         self.topframe.grid(row = 0,column = 0)
+        self.title_frame = tk.Frame(self.masterframe,bg = "white")
+        self.title_frame.grid(row = 1,column =0)
         self.songframe = tk.Frame(self.masterframe,bg = "white")
-        self.songframe.grid(row = 1,column = 0)
+        self.songframe.grid(row = 2,column = 0)
         self.bottomframe = tk.Frame(self.masterframe)
-        self.bottomframe.grid(row = 2,column = 0)
+        self.bottomframe.grid(row = 3,column = 0)
         self.volumeframe = ttk.LabelFrame(self.masterframe,text = "Volume")
-        self.volumeframe.grid(row = 1,column = 1)
+        self.volumeframe.grid(row = 2,column = 1)
         self.songscaleframe = tk.Frame(self.masterframe)
-        self.songscaleframe.grid(row =3,column = 0)
-        self.menu_items = []
-        self.favourites = []
+        self.songscaleframe.grid(row =4,column = 0)
 
+        self.path = os.getcwd()
+        self.filename = f"{self.path}\\playlist.json"
+        try:
+            with open(self.filename,"rt") as file:
+                self.favourites = json.load(file)
+        except:
+            self.favourites = []
+
+        
+        
         #the list of the songs in the music folder, that is brought in by the load_song module
         
 
 
         #stringvar
         self.scalevar = tk.IntVar()
-        self.stringvar = tk.StringVar()
-        self.stringvar.set("new playlist name")
         self.loopvar = tk.IntVar()
         self.shufflevar = tk.IntVar()
         
@@ -69,7 +77,7 @@ class Layout(tk.Tk):
         
 
         self.delete_menu = tk.Menu(self.topmenu)
-        self.topmenu.add_cascade(label = "delete_song",menu = self.delete_menu)
+        self.topmenu.add_cascade(label = "delete song from all songs",menu = self.delete_menu)
         self.delete_menu.add_command(label = "delete selected song from the listbox",command = self.delete_song)
         
 
@@ -99,19 +107,19 @@ class Layout(tk.Tk):
 
         #resizing the buttons that have been imported by the image folder
 
-        path = os.getcwd()
+        
 
         #getting the raw image from the folder
         
-        raw_playbutton = Image.open(f"{path}\\images\\4.png")
-        raw_pausebutton = Image.open(f"{path}\\images\\5.png")
-        raw_unpausebutton = Image.open(f"{path}\\images\\1.png")
-        raw_nextbutton = Image.open(f"{path}\\images\\2.png")
-        raw_previousbutton = Image.open(f"{path}\\images\\3.png")
-        raw_loopbutton = Image.open(f"{path}\\images\\7.png")
-        raw_shufflebutton = Image.open(f"{path}\\images\\6.png")
-        raw_disabled_back_button = Image.open(f"{path}\\images\\8.png")
-        raw_normal_back_button = Image.open(f"{path}\\images\\9.png")
+        raw_playbutton = Image.open(f"{self.path}\\images\\4.png")
+        raw_pausebutton = Image.open(f"{self.path}\\images\\5.png")
+        raw_unpausebutton = Image.open(f"{self.path}\\images\\1.png")
+        raw_nextbutton = Image.open(f"{self.path}\\images\\2.png")
+        raw_previousbutton = Image.open(f"{self.path}\\images\\3.png")
+        raw_loopbutton = Image.open(f"{self.path}\\images\\7.png")
+        raw_shufflebutton = Image.open(f"{self.path}\\images\\6.png")
+        raw_disabled_back_button = Image.open(f"{self.path}\\images\\8.png")
+        raw_normal_back_button = Image.open(f"{self.path}\\images\\9.png")
 
         #resizing the image with antialising
 
@@ -159,19 +167,54 @@ class Layout(tk.Tk):
         self.shuffle_button.grid(row = 0,column = 6,padx = 5)
         self.back_button = tk.Button(self.bottomframe,image = self.disabled_back_button_im,borderwidth = 0, state = tk.DISABLED,command = self.back_button_pressed)
         self.back_button.grid(row = 0,column = 7,padx = 5)
+        self.current_label = tk.Label(self.title_frame,text = "All Songs: ")
+        self.current_label.grid(row = 0,column = 0)
+
+
+
+    def replay_songlist(self):
+        last_song_index = self.songbox.index(tk.END)
+        print(last_song_index)
+        first_song = self.songbox.get(0)
         
+        for i in range(len(self.song_list)):
+            if i == last_song_index:
+                self.songbox.selection_clear(0, tk.END)
+                self.songbox.selection_set(first_song, last=None)
+                self.songbox.activate(first_song)
+                pygame.mixer.music.load(tk.ACTIVE)
+                pygame.mixer.music.play()
+                
+
+
+
     def show_favourites(self):
         """
         this is the command that is executed when the show favourites playlist is clicked. 
         """
-        self.songbox.delete(0,tk.END)
-        self.defeault_song_list = self.song_list
-        for i in range(len(self.favourites)):
-            self.songbox.insert(tk.END, self.favourites[i])
-        
-        self.song_list = self.favourites
-        self.back_button.config(state = tk.NORMAL,image = self.normal_back_button_im)
+        if len(self.favourites) == 0:
+            newWindow = tk.Toplevel(self)
+            newWindow.title("problem happened")
+            newWindow.geometry("400x200")
+            new_frame = tk.Frame(newWindow)
+            new_frame.pack()
+            
+            select_label = tk.Label(new_frame,text = "Your favourite playlist is empty. Try putting in some new songs into it first")
+            select_label.grid(row =0,column=0)
+        else:
 
+            self.songbox.delete(0,tk.END)
+            self.defeault_song_list = self.song_list
+            for i in range(len(self.favourites)):
+                self.songbox.insert(tk.END, self.favourites[i])
+            
+            self.current_label.config(text = "Favourite playlist:")
+            self.topmenu.entryconfig(3,label = "Delete songs from Favourite playlits")
+
+            self.song_list = self.favourites
+            self.back_button.config(state = tk.NORMAL,image = self.normal_back_button_im)
+
+            
 
     def add_favourites(self):
         """
@@ -184,8 +227,8 @@ class Layout(tk.Tk):
         self.new_frame = tk.Frame(self.newWindow)
         self.new_frame.pack()
 
-        done_button = tk.Button(self.new_frame,text = "✓",bg = "white",command = self.done_button_pressed)
-        done_button.grid(row = 0, column =1)
+        done_button = tk.Button(self.new_frame,text = "insert selected into playlist",bg = "white",command = self.done_button_pressed)
+        done_button.grid(row = 3, column =0)
 
         self.select_label = tk.Label(self.new_frame,text = "Select the songs you want to put into the favourites playlist")
         self.select_label.grid(row =0,column=0)
@@ -203,9 +246,21 @@ class Layout(tk.Tk):
         it will be shoing the new and refreshed favourites playlist with the chosen songs in it as well as previous ones
         """
         selected_songs = [self.new_songbox.get(i) for i in self.new_songbox.curselection()]
+        
         for i in range(len(selected_songs)):
 
             self.favourites.append(selected_songs[i])
+        
+        with open(self.filename,"r") as file:
+            
+            in_songs = json.load(file)
+            joined_list = in_songs + selected_songs
+        
+        with open(self.filename,"w") as file:
+            json.dump(joined_list, file)
+                    
+                
+            
         
         self.newWindow.destroy()
 
@@ -238,6 +293,9 @@ class Layout(tk.Tk):
         for i in range(len(self.song_list)):
             self.songbox.insert(tk.END, self.song_list[i])
         self.back_button.config(state = tk.DISABLED,image = self.disabled_back_button_im)
+        self.current_label.config(text = "All songs:")
+        self.topmenu.entryconfig(3,label = "Delete songs from all songs")
+        self.song_list = self.defeault_song_list
 
     def loop_button_pressed(self) -> None:
         """
@@ -264,12 +322,47 @@ class Layout(tk.Tk):
             
     def delete_song(self):
         current_song = self.songbox.get(tk.ACTIVE)
-        for i in range(len(self.song_list)):
-            if self.song_list[i] == current_song:
-                index = i
-        self.songbox.delete(index,last =None)
-        self.song_list.pop(index)
-        print(self.song_list)
+        if self.song_list == self.defeault_song_list:
+
+            for i in range(len(self.song_list)):
+                if self.song_list[i] == current_song:
+                    index = i
+            self.songbox.delete(index,last =None)
+            self.song_list.pop(index)
+
+            if current_song in self.favourites:
+                for i in range(len(self.favourites)):
+                    if self.favourites[i] == current_song:
+                        index = i
+                        
+
+                self.songbox.delete(index,last =None)
+                self.favourites.pop(index)
+
+                with open(self.filename,"r") as file:
+            
+                    in_songs = json.load(file)
+                    in_songs.remove(current_song)
+                    
+                with open(self.filename,"w") as file:
+                    json.dump(in_songs, file)
+        
+        if self.song_list == self.favourites:
+
+            for i in range(len(self.favourites)):
+                if self.song_list[i] == current_song:
+                    index = i
+
+            self.songbox.delete(index,last =None)
+            self.favourites.pop(index)
+        
+            with open(self.filename,"r") as file:
+            
+                in_songs = json.load(file)
+                in_songs.remove(current_song)
+                    
+            with open(self.filename,"w") as file:
+                json.dump(in_songs, file)
         
 
 
@@ -318,8 +411,6 @@ class Layout(tk.Tk):
         This function is the command of the refresh label, so when it gets called it will refresh the whole listbox, and loads in new songs that have just been loaded.
         This function serves as a comfort, more than a functionality, because you don't have to exit the mp3 player to load in the songs
         """
-        
-        
         self.songbox.delete(0,tk.END)
         self.create_lisbox()
         
@@ -340,6 +431,7 @@ class Layout(tk.Tk):
         slide_position = int(song_length)
         self.song_slider.config(to = slide_position)
         self.song_slider.set(0)
+        self.check_event()
         
         
     def unstop_button_pressed(self):
@@ -374,6 +466,7 @@ class Layout(tk.Tk):
                 slide_position = int(song_length)
                 self.song_slider.config(to = slide_position)
                 self.song_slider.set(0)
+                
                 self.check_event()
             
         if shuffle_value == 0:
@@ -398,7 +491,7 @@ class Layout(tk.Tk):
                 slide_position = int(song_length)
                 self.song_slider.config(to = slide_position)
                 self.song_slider.set(0)
-
+                
                 self.check_event()
     
     def stop_button_pressed(self):
