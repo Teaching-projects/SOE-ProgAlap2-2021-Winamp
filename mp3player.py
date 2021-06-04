@@ -190,11 +190,8 @@ class Layout(tk.Tk):
         in a new window
         """
         if len(self.favourites) == 0:
-            self.create_new_window("Your favourite playlist is empty. Try putting in some new songs into it first")
             
-
-        if self.song_list == self.favourites:
-            self.create_new_window("Favourites playlist is already shown")
+            self.create_new_window("Your favourite playlist is empty. Try putting in some new songs into it first")
 
         else:
 
@@ -206,7 +203,7 @@ class Layout(tk.Tk):
             self.current_label.config(text = "Favourite playlist:")
             self.topmenu.entryconfig(3,label = "Delete songs from Favourite playlits")
 
-            self.song_list = self.favourites
+            
             self.back_button.config(state = tk.NORMAL,image = self.normal_back_button_im)
 
             
@@ -415,8 +412,16 @@ class Layout(tk.Tk):
         This function is the command of the refresh label, so when it gets called it will refresh the whole listbox, and loads in new songs that have just been loaded.
         This function serves as a comfort, more than a functionality, because you don't have to exit the mp3 player to load in the songs
         """
-        self.songbox.delete(0,tk.END)
-        self.create_lisbox()
+        self.songbox.delete(0, tk.END)
+        self.song_list = []
+        directory = os.listdir()
+        
+        for i in range(len(directory)):
+            if directory[i].endswith(".mp3"):
+               self.song_list.append(directory[i])
+        
+        for i in range(len(self.song_list)):
+            self.songbox.insert(tk.END, self.song_list[i])
         
 
 
