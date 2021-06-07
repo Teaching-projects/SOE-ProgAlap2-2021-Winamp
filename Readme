@@ -22,3 +22,15 @@ download pygame command: pip install pygame
 Mutagen:
 getting information about the music
 download mutagen command: pip install mutagen
+
+Json:
+This module doesn't need downloading, and is used in the playlist list
+
+Tkinter font:
+Fonting the songs in the box
+
+Time:
+To convert the time
+
+OS
+to be able to work with files
