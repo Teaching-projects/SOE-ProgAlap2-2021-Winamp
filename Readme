@@ -1,4 +1,4 @@
-MP3 player
+#MP3 player
 
 This project is created using a lot of imported modules and packags to simulate an mp3-player, that uses so.path to get the songs, and uses a handful of tkinter widgets to create buttons,
 listboxes, windows, scrolls, etc...
