@@ -1,1 +1,24 @@
+MP3 player
 
+This project is created using a lot of imported modules and packags to simulate an mp3-player, that uses so.path to get the songs, and uses a handful of tkinter widgets to create buttons,
+listboxes, windows, scrolls, etc...
+It has a listbox to display all the songs, and also uses a json file to keep all the songs in the favourite playlist intact and fresh. 
+It also uses alot of modules that are required to run this program, so be sure to download all of them, download command are listed below
+
+The list of the imported modules:
+
+Tkinter:
+the most used module for the project, this is where all the buttons and other widgets come from.
+download command: pip install tk
+
+Pillow, and ImagetK:
+download pillow command: pip install pillow
+imagetk works if pillow is installed
+
+Pygame:
+getting stuff done with the music
+download pygame command: pip install pygame
+
+Mutagen:
+getting information about the music
+download mutagen command: pip install mutagen
