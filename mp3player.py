@@ -241,6 +241,7 @@ class Layout(tk.Tk):
         when the user is done with choosing new songs, than they can press the button with a tick on it, and then the new window will be destroyed. if the user clicks on the show playlist again,
         it will be shoing the new and refreshed favourites playlist with the chosen songs in it as well as previous ones
         """
+        
         selected_songs = [self.new_songbox.get(i) for i in self.new_songbox.curselection()]
         
         for i in range(len(selected_songs)):
