@@ -38,20 +38,16 @@ class Layout(tk.Tk):
 
         #get the current path of the winamp folder, it will be important becuase this path is used to access the images, as well as the playlist.json file
         self.path = os.getcwd()
-
+        
+    
         #this is where the playlist will
-        self.filename = f"{self.path}\\playlist.json"
+        self.filename = os.path.join(f"{self.path}", "playlist.json")
         
         with open(self.filename,"rt") as file:
             self.favourites = json.load(file)
-        
-
-        
-        
+    
         #the list of the songs in the music folder, that is brought in by the load_song module
         
-
-
         #stringvar
         self.scalevar = tk.IntVar()
         self.loopvar = tk.IntVar()
@@ -108,16 +104,19 @@ class Layout(tk.Tk):
 
         #resizing the buttons that have been imported by the image folder
         #getting the raw image from the folder
+        #first joining the images folder, than joining the names of the pngs
+        self.images_folder_path = os.path.join(f"{self.path}", "images")
         
-        raw_playbutton = Image.open(f"{self.path}\\images\\4.png")
-        raw_pausebutton = Image.open(f"{self.path}\\images\\5.png")
-        raw_unpausebutton = Image.open(f"{self.path}\\images\\1.png")
-        raw_nextbutton = Image.open(f"{self.path}\\images\\2.png")
-        raw_previousbutton = Image.open(f"{self.path}\\images\\3.png")
-        raw_loopbutton = Image.open(f"{self.path}\\images\\7.png")
-        raw_shufflebutton = Image.open(f"{self.path}\\images\\6.png")
-        raw_disabled_back_button = Image.open(f"{self.path}\\images\\8.png")
-        raw_normal_back_button = Image.open(f"{self.path}\\images\\9.png")
+        
+        raw_playbutton = Image.open(os.path.join(f"{self.images_folder_path}", "4.png"))
+        raw_pausebutton = Image.open(os.path.join(f"{self.images_folder_path}", "5.png"))
+        raw_unpausebutton = Image.open(os.path.join(f"{self.images_folder_path}", "1.png"))
+        raw_nextbutton = Image.open(os.path.join(f"{self.images_folder_path}", "2.png"))
+        raw_previousbutton = Image.open(os.path.join(f"{self.images_folder_path}", "3.png"))
+        raw_loopbutton = Image.open(os.path.join(f"{self.images_folder_path}", "7.png"))
+        raw_shufflebutton = Image.open(os.path.join(f"{self.images_folder_path}", "6.png"))
+        raw_disabled_back_button = Image.open(os.path.join(f"{self.images_folder_path}", "8.png"))
+        raw_normal_back_button = Image.open(os.path.join(f"{self.images_folder_path}", "9.png"))
 
         #resizing the image with antialising
 
@@ -175,6 +174,7 @@ class Layout(tk.Tk):
         Args:
             output (str): the string that will be put out on the new window
         """
+
         newWindow = tk.Toplevel(self)
         newWindow.title("problem happened")
         newWindow.geometry("400x200")
@@ -206,8 +206,6 @@ class Layout(tk.Tk):
             
             self.back_button.config(state = tk.NORMAL,image = self.normal_back_button_im)
 
-            
-
     def add_favourites(self):
         """
         this commnand is called when the user wants to put in new songs into the playlist. first it generates a new window with the full songlist, the user can choose multiple songs from it,
@@ -232,6 +230,7 @@ class Layout(tk.Tk):
         self.new_songbox.grid(row = 2,column= 0)
         music_scrollbar.config(command = self.new_songbox.yview)
         self.new_songbox.config(yscrollcommand=music_scrollbar.set)
+        
         #put in all the songs from the original into this for selection
         for i in range(len(self.song_list)):
             if self.song_list[i].endswith(".mp3"):
@@ -257,8 +256,6 @@ class Layout(tk.Tk):
             json.dump(joined_list, file)
                     
                 
-            
-        
         self.newWindow.destroy()
 
     def create_lisbox(self) -> None:
@@ -302,9 +299,6 @@ class Layout(tk.Tk):
         current_song = self.songbox.get(tk.ACTIVE)
         pygame.mixer.music.queue(current_song)
         
-
-
-    
     def shuffle_button_pressed(self) -> None:
         """
         In this function If the shufle button is turned on, then the next song in the queue will be a random one, aka shuffled one
@@ -340,6 +334,9 @@ class Layout(tk.Tk):
                     
         with open(self.filename,"w") as file:
             json.dump(in_songs, file)
+        
+        if len(self.favourites) == 0:
+            self.back_button_pressed()
 
     def delete_song(self) -> None:
         """
@@ -362,6 +359,12 @@ class Layout(tk.Tk):
         if self.song_list == self.favourites:
 
             self.delete_song_from_playlist(current_song)
+
+            if len(self.favourites) == 0:
+                for i in range(len(self.defeault_song_list)):
+                    self.songbox.insert(tk.END, self.defeault_song_list[i])
+        
+        
         
 
 
@@ -378,7 +381,7 @@ class Layout(tk.Tk):
 
         self.status_bar.after(1000, self.get_playtime)
         song = self.songbox.get(tk.ACTIVE)
-        song = f"{self.directory}/{song}"
+        song = os.path.join(f"{self.directory}", f"{song}")
         song_mut = MP3(song)
         global song_length
         song_length = song_mut.info.length
@@ -386,10 +389,6 @@ class Layout(tk.Tk):
         converted_song_length = time.strftime('%M:%S', time.gmtime(song_length))
         self.status_bar.config(text = f"duration: {converted_current_time} out of {converted_song_length}")
 
-        
-
-    
-    
     def check_event(self) -> None:
         """
         At first glance this function doesn't do that much but this holds the whole playlist together. This loops the songs, and keeps the queue playing.
@@ -404,9 +403,6 @@ class Layout(tk.Tk):
                 
         self.after(1000,self.check_event)
         
-        
-        
-
     def refresh(self) -> None:
         """
         This function is the command of the refresh label, so when it gets called it will refresh the whole listbox, and loads in new songs that have just been loaded.
@@ -433,7 +429,7 @@ class Layout(tk.Tk):
         pygame.init()
         pygame.mixer.init()
         song = self.songbox.get(tk.ACTIVE)
-        song = f"{self.directory}/{song}"
+        song = os.path.join(f"{self.directory}", f"{song}")
         pygame.mixer.music.load(song)
         pygame.mixer.music.play()
         self.get_playtime()
@@ -449,9 +445,7 @@ class Layout(tk.Tk):
         """
         pygame.mixer.music.unpause()
 
-    
-    
-    
+
     def next_button_pressed(self):
         """
         this is callled when the user clickes the next button. if the loop checkbox is cliced, the user cannot click the next button, and the current song is set to looping.
@@ -516,7 +510,7 @@ class Layout(tk.Tk):
         previous_one = self.songbox.curselection()
         previous_one = previous_one[0]-1
         song = self.songbox.get(previous_one)
-        #song = f'{self.directory}/{song}'
+
         
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(loops=0)
