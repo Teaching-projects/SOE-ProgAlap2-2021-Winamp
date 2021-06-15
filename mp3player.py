@@ -11,19 +11,36 @@ import random
 from tkinter.font import Font
 
 class Frame(tk.Frame):
-    def __init__(self,master,bg_color):
+    def __init__(self,master,bg_color)-> None:
+        """
+        Generate frames, with a master, and bg_color, this will be used in the main layout
+
+        Args:
+            master (variable): the master that will the frame will be put on
+            bg_color (string): The bg color of the frame
+        """
         super().__init__()
         self.master = master
         self.bg_color = bg_color
 
 class Window(tk.Toplevel):
-    def __init__(self,title,geometry):
+    def __init__(self,title,geometry) -> None:
+        """
+        Generate new window with a master and geometry, than this will be used as well in the main app
+
+        Args:
+            title (string): the string that will be displayed in a label
+            geometry (string): the geometry like 300x700 
+        """
         super().__init__()
         self.title = title
         self.geometry = geometry
 
 class Layout(tk.Tk):
     def __init__(self) -> None:
+        """
+        Initialize the basics, set pygame init, intvars, pygame event etc
+        """
         super().__init__()
 
         #set intvars, and pygame event
@@ -41,7 +58,10 @@ class Layout(tk.Tk):
         self.title("Audify MP3 player")
         self.geometry("700x400")
         
-    def create_frames(self):
+    def create_frames(self) ->None:
+        """
+        Generate frames more efficiently
+        """
         middle_frames = []
 
         self.masterframe = Frame(self,"white")
@@ -63,7 +83,10 @@ class Layout(tk.Tk):
         self.songscaleframe = middle_frames[4]
         
         
-    def create_path(self):
+    def create_path(self) -> None:
+        """
+        generate path for furhter use
+        """
         self.path = os.getcwd()
         
     
@@ -77,7 +100,10 @@ class Layout(tk.Tk):
         
         #stringvar
         
-    def create_menus(self):
+    def create_menus(self)-> None:
+        """
+        Generate the menus
+        """
         
 
         #font for the music
@@ -105,7 +131,10 @@ class Layout(tk.Tk):
 
         
 
-    def create_songbox(self):
+    def create_songbox(self) -> None:
+        """
+        Create the songbox
+        """
 
         self.music_scrollbar = tk.Scrollbar(self.songframe,bg = "grey",orient = "vertical")
         self.music_scrollbar.grid(row = 0,column = 1,sticky = "ns")
@@ -141,7 +170,10 @@ class Layout(tk.Tk):
             button_image = ImageTk.PhotoImage(resized_button)
             self.button_images.append(button_image)
 
-    def create_buttons(self):
+    def create_buttons(self) -> None:
+        """
+        Create the buttons more efficiently
+        """
         #buttons on the third frame
         buttons = []
         button_names = ["self.play_button","self.pause_button","self.unpause_button","self.next_button","self.previous_button","self.loop_button","self.shuffle_button","self.back_button"]
@@ -279,6 +311,7 @@ class Layout(tk.Tk):
         for i in range(len(directory)):
             if directory[i].endswith(".mp3"):
                self.song_list.append(directory[i])
+            
         
         for i in range(len(self.song_list)):
             self.songbox.insert(tk.END, self.song_list[i])
@@ -433,9 +466,10 @@ class Layout(tk.Tk):
         if the user clicks on a song in the songbox and clickes this, it will start the song and play it.
         """
         
-        
         song = self.songbox.get(tk.ACTIVE)
         song = os.path.join(f"{self.directory}", f"{song}")
+        
+
         pygame.mixer.music.load(song)
         pygame.mixer.music.play()
         self.get_playtime()
