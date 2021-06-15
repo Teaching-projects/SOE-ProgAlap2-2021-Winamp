@@ -10,33 +10,60 @@ import json
 import random
 from tkinter.font import Font
 
+class Frame(tk.Frame):
+    def __init__(self,master,bg_color):
+        super().__init__()
+        self.master = master
+        self.bg_color = bg_color
 
+class Window(tk.Toplevel):
+    def __init__(self,title,geometry):
+        super().__init__()
+        self.title = title
+        self.geometry = geometry
 
 class Layout(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        """In this gigantic init function there's all the different widgets, like buttons, scales, scrollbars, frames, checkbuttons, string and intvars etc...
-        """
-        # the frames
+
+        #set intvars, and pygame event
+        self.scalevar = tk.IntVar()
+        self.loopvar = tk.IntVar()
+        self.shufflevar = tk.IntVar()
+        self.is_next_button_pressed = False
+        self.is_previous_button_pressed = False
+        pygame.init()
+        pygame.mixer.init()
         
+        self.SONG_END = pygame.USEREVENT + 1
+        pygame.mixer.music.set_endevent(self.SONG_END)
+
         self.title("Audify MP3 player")
         self.geometry("700x400")
-        self.masterframe = tk.Frame(self)
-        self.masterframe.pack()
-        self.topframe = tk.Frame(self.masterframe,bg = "white")
-        self.topframe.grid(row = 0,column = 0)
-        self.title_frame = tk.Frame(self.masterframe,bg = "white")
-        self.title_frame.grid(row = 1,column =0)
-        self.songframe = tk.Frame(self.masterframe,bg = "white")
-        self.songframe.grid(row = 2,column = 0)
-        self.bottomframe = tk.Frame(self.masterframe)
-        self.bottomframe.grid(row = 3,column = 0)
-        self.volumeframe = ttk.LabelFrame(self.masterframe,text = "Volume")
-        self.volumeframe.grid(row = 2,column = 1)
-        self.songscaleframe = tk.Frame(self.masterframe)
-        self.songscaleframe.grid(row =4,column = 0)
+        
+    def create_frames(self):
+        middle_frames = []
 
-        #get the current path of the winamp folder, it will be important becuase this path is used to access the images, as well as the playlist.json file
+        self.masterframe = Frame(self,"white")
+        self.masterframe.grid(row = 0,column =0)
+        for i in range(6):
+            if i == 5:
+                self.volumeframe = Frame(self.masterframe,"white")
+                self.volumeframe.grid(row = 2,column = 1)
+            else:
+                frame = Frame(self.masterframe,"white")
+                frame.grid(row = i,column = 0)
+                middle_frames.append(frame)
+
+    
+        self.topframe = middle_frames[0]
+        self.title_frame = middle_frames[1]
+        self.songframe = middle_frames[2]
+        self.bottomframe = middle_frames[3]
+        self.songscaleframe = middle_frames[4]
+        
+        
+    def create_path(self):
         self.path = os.getcwd()
         
     
@@ -49,10 +76,8 @@ class Layout(tk.Tk):
         #the list of the songs in the music folder, that is brought in by the load_song module
         
         #stringvar
-        self.scalevar = tk.IntVar()
-        self.loopvar = tk.IntVar()
-        self.shufflevar = tk.IntVar()
         
+    def create_menus(self):
         
 
         #font for the music
@@ -77,9 +102,10 @@ class Layout(tk.Tk):
         self.delete_menu = tk.Menu(self.topmenu)
         self.topmenu.add_cascade(label = "delete song from all songs",menu = self.delete_menu)
         self.delete_menu.add_command(label = "delete selected song from the listbox",command = self.delete_song)
+
         
 
-        #listbox in the song (middle) frame
+    def create_songbox(self):
 
         self.music_scrollbar = tk.Scrollbar(self.songframe,bg = "grey",orient = "vertical")
         self.music_scrollbar.grid(row = 0,column = 1,sticky = "ns")
@@ -93,96 +119,67 @@ class Layout(tk.Tk):
         self.volume_slider.set(100)
         self.song_slider = tk.Scale(self.songscaleframe,from_ = 0, to= 100,orient = tk.HORIZONTAL,length = 500)
         self.song_slider.set(0)
-        self.song_slider.pack(pady = 20)
+        self.song_slider.pack(pady = 22)
         self.volume_slider.pack(pady = 22)
 
         # status bar, that gets the duration of the song
         self.status_bar = tk.Label(self.songscaleframe, text="no song playing", bd=1, relief=tk.GROOVE)
         self.status_bar.pack()
         
-        
 
-        #resizing the buttons that have been imported by the image folder
-        #getting the raw image from the folder
-        #first joining the images folder, than joining the names of the pngs
-        self.images_folder_path = os.path.join(f"{self.path}", "images")
+    def get_and_set_images(self):
+        images = ["3.png","4.png","5.png","1.png","2.png","7.png","6.png","8.png","9.png"]
+        self.button_images = []
         
         
-        raw_playbutton = Image.open(os.path.join(f"{self.images_folder_path}", "4.png"))
-        raw_pausebutton = Image.open(os.path.join(f"{self.images_folder_path}", "5.png"))
-        raw_unpausebutton = Image.open(os.path.join(f"{self.images_folder_path}", "1.png"))
-        raw_nextbutton = Image.open(os.path.join(f"{self.images_folder_path}", "2.png"))
-        raw_previousbutton = Image.open(os.path.join(f"{self.images_folder_path}", "3.png"))
-        raw_loopbutton = Image.open(os.path.join(f"{self.images_folder_path}", "7.png"))
-        raw_shufflebutton = Image.open(os.path.join(f"{self.images_folder_path}", "6.png"))
-        raw_disabled_back_button = Image.open(os.path.join(f"{self.images_folder_path}", "8.png"))
-        raw_normal_back_button = Image.open(os.path.join(f"{self.images_folder_path}", "9.png"))
-
-        #resizing the image with antialising
-
-        resized_playbutton = raw_playbutton.resize((40,40),Image.ANTIALIAS)
-        resized_pausebutton = raw_pausebutton.resize((40,40),Image.ANTIALIAS)
-        resized_unpausebutton = raw_unpausebutton.resize((40,40),Image.ANTIALIAS)
-        resized_nextbutton = raw_nextbutton.resize((40,40),Image.ANTIALIAS)
-        resized_previousbutton = raw_previousbutton.resize((40,40),Image.ANTIALIAS)
-        resized_loopbutton = raw_loopbutton.resize((50,50),Image.ANTIALIAS)
-        resized_shufflebutton = raw_shufflebutton.resize((50,50),Image.ANTIALIAS)
-        resized_disabled_back_button = raw_disabled_back_button.resize((50,50),Image.ANTIALIAS)
-        resized_normal_back_button = raw_normal_back_button.resize((50,50),Image.ANTIALIAS)
-
-        # getting the image that will be used
-
-        self.playbutton_im = ImageTk.PhotoImage(resized_playbutton)
-        self.pausebutton_im = ImageTk.PhotoImage(resized_pausebutton)
-        self.unpausebutton_im = ImageTk.PhotoImage(resized_unpausebutton)
-        self.nextbutton_im = ImageTk.PhotoImage(resized_nextbutton)
-        self.previousbutton_im = ImageTk.PhotoImage(resized_previousbutton)
-        self.loopbutton_im = ImageTk.PhotoImage(resized_loopbutton)
-        self.shufflebutton_im = ImageTk.PhotoImage(resized_shufflebutton)
-        self.disabled_back_button_im = ImageTk.PhotoImage(resized_disabled_back_button)
-        self.normal_back_button_im = ImageTk.PhotoImage(resized_normal_back_button)
-
-        #pygame event
-        self.SONG_END = pygame.USEREVENT + 1
-        pygame.mixer.music.set_endevent(self.SONG_END)
+        images_folder_path = os.path.join(f"{self.path}", "images")
         
+        
+        for i in range(9):
+            raw_button = Image.open(os.path.join(f"{images_folder_path}", images[i]))
+            resized_button = raw_button.resize((40,40),Image.ANTIALIAS)
+            button_image = ImageTk.PhotoImage(resized_button)
+            self.button_images.append(button_image)
 
+    def create_buttons(self):
         #buttons on the third frame
-        self.pause_button = tk.Button(self.bottomframe,image =self.pausebutton_im,borderwidth = 0,command = self.stop_button_pressed)
-        self.pause_button.grid(row = 0,column = 2,padx = 5)
-        self.unpause_button = tk.Button(self.bottomframe,image =self.unpausebutton_im,borderwidth = 0,command = self.unstop_button_pressed)
-        self.unpause_button.grid(row = 0,column = 3,padx = 5)
-        self.play_button = tk.Button(self.bottomframe,image =self.playbutton_im,borderwidth = 0,command =self.play_button_pressed)
-        self.play_button.grid(row = 0,column = 1,padx = 5)
-        self.next_button = tk.Button(self.bottomframe,image = self.nextbutton_im,borderwidth = 0,command =self.next_button_pressed)
-        self.next_button.grid(row = 0,column = 4,padx = 5)
-        self.previous_button = tk.Button(self.bottomframe,image = self.previousbutton_im,borderwidth = 0,command = self.previous_button_pressed)
-        self.previous_button.grid(row = 0,column = 0,padx = 5)
-        self.loop_button = tk.Checkbutton(self.bottomframe,image = self.loopbutton_im,variable = self.loopvar,onvalue = 1,offvalue = 0,borderwidth = 0,command = self.loop_button_pressed)
-        self.loop_button.grid(row = 0,column = 5,padx = 5)
-        self.shuffle_button = tk.Checkbutton(self.bottomframe,image = self.shufflebutton_im,variable = self.shufflevar,onvalue = 1,offvalue = 0,borderwidth = 0,command = self.shuffle_button_pressed)
-        self.shuffle_button.grid(row = 0,column = 6,padx = 5)
-        self.back_button = tk.Button(self.bottomframe,image = self.disabled_back_button_im,borderwidth = 0, state = tk.DISABLED,command = self.back_button_pressed)
-        self.back_button.grid(row = 0,column = 7,padx = 5)
+        buttons = []
+        button_names = ["self.play_button","self.pause_button","self.unpause_button","self.next_button","self.previous_button","self.loop_button","self.shuffle_button","self.back_button"]
+        self.buttons = []
+        for i in range(8):
+            if i == 5:
+                checkbutton = tk.Checkbutton(self.bottomframe,image = self.button_images[i],variable = self.loopvar,onvalue = 1, offvalue = 0,borderwidth = 0)
+                buttons.append(checkbutton)
+            elif i == 6:
+                checkbutton = tk.Checkbutton(self.bottomframe,image = self.button_images[i],variable = self.shufflevar,onvalue = 1, offvalue = 0,borderwidth = 0)
+                buttons.append(checkbutton)
+            else:
+                button = tk.Button(self.bottomframe,image = self.button_images[i],borderwidth = 0)
+                buttons.append(button)
+        
+        for i in range(8):
+            str = button_names[i]
+            
+            #i cannot set it to the button first, because the second parameter must be a number, so i set it to some random number, and then setting itt to the correct button object
+            exec("%s = %d" % (str,5000))
+            str = buttons[i]
+            self.buttons.append(str)
+    
+            str.grid(row = 0,column = i,padx = 5)
+        
+        self.buttons[0].config(command = self.previous_button_pressed)
+        self.buttons[1].config(command = self.play_button_pressed)
+        self.buttons[2].config(command = self.stop_button_pressed)
+        self.buttons[3].config(command = self.unstop_button_pressed)
+        self.buttons[4].config(command = self.next_button_pressed)
+        self.buttons[5].config(command = self.loop_button_pressed)
+        self.buttons[6].config(command = self.shuffle_button_pressed)
+        self.buttons[7].config(command = self.back_button_pressed,state = tk.DISABLED)
+        
+
         self.current_label = tk.Label(self.title_frame,text = "All Songs: ")
         self.current_label.grid(row = 0,column = 0)
 
-    def create_new_window(self,output:str) -> None:
-        """
-        This function is only for avoiding code repetition, it creates a new window with a problem message
-
-        Args:
-            output (str): the string that will be put out on the new window
-        """
-
-        newWindow = tk.Toplevel(self)
-        newWindow.title("problem happened")
-        newWindow.geometry("400x200")
-        new_frame = tk.Frame(newWindow)
-        new_frame.pack()
-            
-        select_label = tk.Label(new_frame,text = output)
-        select_label.grid(row =0,column=0)
 
     def show_favourites(self):
         """
@@ -191,7 +188,14 @@ class Layout(tk.Tk):
         """
         if len(self.favourites) == 0:
             
-            self.create_new_window("Your favourite playlist is empty. Try putting in some new songs into it first")
+            
+            window = Window("Problem happened","400x200")
+            new_frame = tk.Frame(window)
+            new_frame.grid(row = 0,column = 0)
+            
+            select_label = tk.Label(new_frame,text = "Your favourite playlist is empty. Try putting in some new songs into it first")
+            select_label.grid(row =0,column=0)
+            
 
         else:
 
@@ -204,18 +208,19 @@ class Layout(tk.Tk):
             self.topmenu.entryconfig(3,label = "Delete songs from Favourite playlits")
 
             
-            self.back_button.config(state = tk.NORMAL,image = self.normal_back_button_im)
+            
+            self.buttons[7].config(state = tk.NORMAL,image = self.button_images[8])
 
     def add_favourites(self):
         """
         this commnand is called when the user wants to put in new songs into the playlist. first it generates a new window with the full songlist, the user can choose multiple songs from it,
         and then if you press the tick button the next function is called.
         """
-        self.newWindow = tk.Toplevel(self)
-        self.newWindow.title("Create playlist")
-        self.newWindow.geometry("700x400")
+        self.newWindow = Window("Playlist_Editor","700x400")
+        
         self.new_frame = tk.Frame(self.newWindow)
-        self.new_frame.pack()
+        
+        self.new_frame.grid(row = 0, column =0)
 
         done_button = tk.Button(self.new_frame,text = "insert selected into playlist",bg = "white",command = self.done_button_pressed)
         done_button.grid(row = 3, column =0)
@@ -287,7 +292,8 @@ class Layout(tk.Tk):
         self.song_list = self.defeault_song_list
         for i in range(len(self.song_list)):
             self.songbox.insert(tk.END, self.song_list[i])
-        self.back_button.config(state = tk.DISABLED,image = self.disabled_back_button_im)
+        
+        self.buttons[7].config(state = tk.DISABLED,image = self.button_images[7])
         self.current_label.config(text = "All songs:")
         self.topmenu.entryconfig(3,label = "Delete songs from all songs")
         self.song_list = self.defeault_song_list
@@ -427,8 +433,7 @@ class Layout(tk.Tk):
         if the user clicks on a song in the songbox and clickes this, it will start the song and play it.
         """
         
-        pygame.init()
-        pygame.mixer.init()
+        
         song = self.songbox.get(tk.ACTIVE)
         song = os.path.join(f"{self.directory}", f"{song}")
         pygame.mixer.music.load(song)
@@ -447,17 +452,44 @@ class Layout(tk.Tk):
         pygame.mixer.music.unpause()
 
 
+
+    def play_another_song(self):
+        next_one = self.songbox.curselection()
+        if self.is_next_button_pressed:
+            next_one = next_one[0]+1
+        if self.is_previous_button_pressed:
+            next_one = next_one[0]-1
+        
+        song = self.songbox.get(next_one)
+        song = os.path.join(f"{self.directory}", f"{song}")
+                
+        pygame.mixer.music.load(song)
+        pygame.mixer.music.play(loops=0)
+                
+
+        self.songbox.selection_clear(0, tk.END)
+        self.songbox.activate(next_one)
+        self.songbox.selection_set(next_one, last=None)
+        self.get_playtime()
+        slide_position = int(song_length)
+        self.song_slider.config(to = slide_position)
+        self.song_slider.set(0)
+        self.check_event()
+
+
     def next_button_pressed(self):
         """
         this is callled when the user clickes the next button. if the loop checkbox is cliced, the user cannot click the next button, and the current song is set to looping.
         if the shuffle checkbox is pressed, than the next song will be a random one.
         """
+        self.is_next_button_pressed = True
         shuffle_value = self.shufflevar.get()
         loop_value = self.loopvar.get()
         if shuffle_value == 1:
             random_song = random.randint(0,len(self.song_list)-1)
             if loop_value ==1:
                 self.loop_button_pressed()
+                self.is_next_button_pressed = False
             else:
                 
                 pygame.mixer.music.load(self.song_list[random_song])
@@ -472,31 +504,15 @@ class Layout(tk.Tk):
                 self.song_slider.set(0)
                 
                 self.check_event()
+                self.is_next_button_pressed = False
             
         if shuffle_value == 0:
             if loop_value ==1:
                 self.loop_button_pressed()
+                self.is_next_button_pressed = False
             else:
-                
-
-                next_one = self.songbox.curselection()
-                next_one = next_one[0]+1
-                song = self.songbox.get(next_one)
-                song = f'{self.directory}/{song}'
-                
-                pygame.mixer.music.load(song)
-                pygame.mixer.music.play(loops=0)
-                
-
-                self.songbox.selection_clear(0, tk.END)
-                self.songbox.activate(next_one)
-                self.songbox.selection_set(next_one, last=None)
-                self.get_playtime()
-                slide_position = int(song_length)
-                self.song_slider.config(to = slide_position)
-                self.song_slider.set(0)
-                
-                self.check_event()
+                self.play_another_song()
+                self.is_next_button_pressed = False
     
     def stop_button_pressed(self):
         """
@@ -504,26 +520,14 @@ class Layout(tk.Tk):
         """
         pygame.mixer.music.pause()
 
+
     def previous_button_pressed(self):
         """
         plays the previous song
         """
-        previous_one = self.songbox.curselection()
-        previous_one = previous_one[0]-1
-        song = self.songbox.get(previous_one)
-
-        
-        pygame.mixer.music.load(song)
-        pygame.mixer.music.play(loops=0)
-
-        self.songbox.selection_clear(0, tk.END)
-        self.songbox.activate(previous_one)
-        self.songbox.selection_set(previous_one, last=None)
-        self.get_playtime()
-        slide_position = int(song_length)
-        self.song_slider.config(to = slide_position)
-        self.song_slider.set(0)
-        self.check_event()
+        self.is_previous_button_pressed = True
+        self.play_another_song()
+        self.is_previous_button_pressed = False
     
     #set the volume
     def volume(self,vol):
@@ -532,13 +536,18 @@ class Layout(tk.Tk):
         Args:
             vol (int): this is only needed becuase this is the value that the function uses forthe value of the current volume
         """
-        pygame.init()
-        pygame.mixer.init()
+        
         
         self.scalevar = int(vol) / 100
         pygame.mixer.music.set_volume(self.scalevar)
         
 
 layout = Layout()
+layout.create_frames()
+layout.create_path()
+layout.create_menus()
+layout.create_songbox()
+layout.get_and_set_images()
+layout.create_buttons()
 layout.create_lisbox()
 layout.mainloop()
